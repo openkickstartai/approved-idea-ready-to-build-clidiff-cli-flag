@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Run tests
+        run: go test -v -race ./...
+      - name: Build binary
+        run: go build -o clidiff .
+      - name: Smoke test snapshot
+        run: |
+          ./clidiff snapshot go -o /tmp/go-snap.json
+          cat /tmp/go-snap.json
+      - name: Smoke test diff (no changes)
+        run: |
+          ./clidiff snapshot go -o /tmp/snap-a.json
+          ./clidiff snapshot go -o /tmp/snap-b.json
+          ./clidiff diff /tmp/snap-a.json /tmp/snap-b.json
